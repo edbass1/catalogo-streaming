@@ -13,17 +13,17 @@ nav button.on,.sub button.on{background:#e50914}.wrap{padding:12px 18px}small{co
 <script>
 const DATA=__DATA__;let S=Object.keys(DATA.sections)[0],V='voto',G=new Set(),T='tutti';
 const subs=[['voto','Voto IMDb'],['prima','Prime visioni / novità'],['generi','Per genere'],['clou','IL CLOU']];
-function nav(){const n=document.getElementById('nav');n.innerHTML='';[...Object.keys(DATA.sections),'Teche Rai (recenti)'].forEach(k=>{const b=document.createElement('button');b.textContent=k;b.className=k==S?'on':'';b.onclick=()=>{S=k;G.clear();T='tutti';render()};n.appendChild(b)})}
+function nav(){const n=document.getElementById('nav');n.innerHTML='';Object.keys(DATA.sections).forEach(k=>{const b=document.createElement('button');b.textContent=k;b.className=k==S?'on':'';b.onclick=()=>{S=k;G.clear();T='tutti';if(k=='Teche Rai')V='tutto';else if(V=='tutto'||V=='nuovi')V='voto';render()};n.appendChild(b)})}
 function card(e){return `<div class="c">${e.rating?`<span class="r">${e.rating}</span>`:''}<a href="${e.url}" target="_blank">${esc(e.title)}</a> <small>${e.year||''}</small><br><small>${esc(e.platform)}${e.seen&&e.prima?' · nuovo dal '+e.seen:e.added?' · agg. '+e.added:''}${e.votes?' · '+e.votes.toLocaleString('it')+' voti':''}</small><br>${e.prima?'<span class="tag pv">Prima visione/novità</span>':''}${e.clou?'<span class="tag cl">Il Clou</span>':''}${e.genres.map(g=>`<span class="tag">${esc(g)}</span>`).join('')}<p>${esc((e.desc||'').slice(0,220))}</p></div>`}
 function fold(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}
 function srch(L){const q=fold(document.getElementById('q').value).trim();if(!q)return L;const w=q.split(/\s+/);return L.filter(e=>{const h=fold([e.title,e.orig,e.desc,e.genres.join(' ')].join(' '));return w.every(x=>h.includes(x))})}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function render(){nav();const typ=document.getElementById('typ');typ.innerHTML='';const sub=document.getElementById('sub'),gen=document.getElementById('gen'),g=document.getElementById('g');gen.innerHTML='';
-if(!DATA.sections[S]){sub.innerHTML='<small>Ultimi titoli aggiunti alle Teche Rai (data stimata dalla pubblicazione delle immagini)</small>';g.innerHTML=srch(DATA.teche).map(card).join('')||'<small>Nessun titolo</small>';return}
-sub.innerHTML='';subs.forEach(([k,l])=>{const b=document.createElement('button');b.textContent=(k=='prima'&&S=='RSI Play')?'AGGIUNTI (ultimi 10 giorni)':l;b.className=k==V?'on':'';b.onclick=()=>{V=k;render()};sub.appendChild(b)});
+
+sub.innerHTML='';(S=='Teche Rai'?[['tutto','Catalogo completo'],['nuovi','Nuovi arrivi (50 più recenti)'],['voto','Voto IMDb'],['generi','Per genere'],['clou','IL CLOU']]:subs).forEach(([k,l])=>{const b=document.createElement('button');b.textContent=(k=='prima'&&S=='RSI Play')?'AGGIUNTI (ultimi 10 giorni)':l;b.className=k==V?'on':'';b.onclick=()=>{V=k;render()};sub.appendChild(b)});
 let L=DATA.sections[S].filter(e=>!e.excluded);
 if(new Set(DATA.sections[S].map(e=>e.type)).size>1){[['tutti','Tutti'],['film','Film'],['serie','Serie TV']].forEach(([k,l])=>{const b=document.createElement('button');b.textContent=l;b.className=k==T?'on':'';b.onclick=()=>{T=k;G.clear();render()};typ.appendChild(b)});if(T!='tutti')L=L.filter(e=>e.type==T)}
 if(V=='generi'){const all=[...new Set(L.flatMap(e=>e.genres))].sort();gen.innerHTML=all.map(x=>`<label><input type=checkbox value="${esc(x)}" ${G.has(x)?'checked':''}> ${esc(x)}</label>`).join('');gen.querySelectorAll('input').forEach(i=>i.onchange=()=>{i.checked?G.add(i.value):G.delete(i.value);render()});if(G.size)L=L.filter(e=>e.genres.some(x=>G.has(x)))}
-L=srch(L);if(V=='prima')L=L.filter(e=>e.prima);if(V=='clou')L=L.filter(e=>e.clou);
-L.sort((a,b)=>(V=='prima'&&a.seen)?b.seen.localeCompare(a.seen):V=='clou'?(b.votes||0)-(a.votes||0):(b.rating||0)-(a.rating||0));g.innerHTML=L.map(card).join('')||'<small>Nessun titolo</small>'}
+if(V=='nuovi')L=[...DATA.sections[S]].sort((a,b)=>(b.added||'').localeCompare(a.added||'')).slice(0,50).filter(e=>!e.excluded);L=srch(L);if(V=='prima')L=L.filter(e=>e.prima);if(V=='clou')L=L.filter(e=>e.clou);
+if(V!='nuovi'&&V!='tutto')L.sort((a,b)=>(V=='prima'&&a.seen)?b.seen.localeCompare(a.seen):V=='clou'?(b.votes||0)-(a.votes||0):(b.rating||0)-(a.rating||0));g.innerHTML=L.map(card).join('')||'<small>Nessun titolo</small>'}
 document.getElementById('q').oninput=render;render();</script></body></html>

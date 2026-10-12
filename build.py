@@ -205,12 +205,13 @@ def main():
     teche = rai_section('techerai', 'Teche Rai')
     S['RSI Play'] = rsi(); rsi_seen(S['RSI Play'])
     S['LA7 Cinema'] = la7()
+    S['Teche Rai'] = teche
     idx, ratings = imdb_index()
     stats = []
     for k, v in S.items():
         tot = len(v); h = enrich(v, idx, ratings)
         for e in v:
-            e['type'] = 'serie' if 'Serie' in e['platform'] else 'film'
+            e['type'] = 'teche' if k == 'Teche Rai' else ('serie' if 'Serie' in e['platform'] else 'film')
             e['excluded'] = any(EXCL.search(g) for g in e['genres'])
             e['clou'] = (e.get('votes') or 0) >= CLOU_VOTES or (e['popular'] and (e.get('rating') or 0) >= 6.5)
         stats.append(f'{k}: {tot} titoli, {h} con voto IMDb, {sum(e["excluded"] for e in v)} esclusi per genere, '
@@ -220,7 +221,7 @@ def main():
         f = sum(e['type'] == 'film' for e in v); print(f'{k}: {f} film, {len(v) - f} serie')
     stats.append(f'Teche Rai: {len(teche)} titoli')
     s = ' | '.join(stats); print(s)
-    open(os.path.join(D, 'index.html'), 'w', encoding='utf-8').write(page(S, teche[:150], s))
-    json.dump({'sections': S, 'teche': teche}, open(os.path.join(D, 'catalogo.json'), 'w'), ensure_ascii=False)
+    open(os.path.join(D, 'index.html'), 'w', encoding='utf-8').write(page(S, [], s))
+    json.dump({'sections': S}, open(os.path.join(D, 'catalogo.json'), 'w'), ensure_ascii=False)
     print('ok in %.0fs' % (time.time() - t0))
 main()
