@@ -70,12 +70,13 @@ def rai_section(tipologia, plat_label):
 # ---------------- LA7 Cinema ----------------
 L7 = 'https://www.la7.it'
 def gethtml(url):
-    for i in range(3):
+    for i in range(5):
+        time.sleep(1.5)  # la7.it risponde 429 se le richieste sono troppo ravvicinate
         try:
             with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r: return r.read().decode('utf-8', 'ignore')
         except Exception as e:
-            if i == 2: print('ERR', url, e); return ''
-            time.sleep(2)
+            if i == 4: print('ERR', url, e); return ''
+            time.sleep(10 * (i + 1))
 
 def la7():
     links = []
@@ -86,7 +87,10 @@ def la7():
         links += new
     def det(path):
         h = gethtml(L7 + path)
-        if not h: return None
+        if not h:  # dettaglio non disponibile: titolo dallo slug
+            t = re.sub(r'-\d\d-\d\d-\d{4}-\d+$', '', path.rsplit('/', 1)[-1]).replace('-', ' ').capitalize()
+            return {'platform': 'LA7 Cinema', 'title': t, 'year': '', 'genres': [], 'url': L7 + path, 'desc': '',
+                    'added': '', 'prima': False, 'popular': False, 'label': ''}
         meta = lambda k: html.unescape((re.search(r'<meta (?:property|name)="%s" content="([^"]*)"' % k, h) or [None, ''])[1])
         t = meta('og:title').split('|'); d = meta('og:description')
         title = t[0].strip() or path
@@ -98,7 +102,7 @@ def la7():
                 'prima': bool(re.search(r'prima visione', h[:200000], re.I) and re.search(r'prima visione', d + t[0], re.I)),
                 'popular': False, 'label': ''}
     out = {}
-    for e in pmap(det, links, 8):
+    for e in map(det, links):
         if e: out.setdefault((norm(e['title']), e['year']), e)  # stesso film, repliche diverse
     return list(out.values())
 
