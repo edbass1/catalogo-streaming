@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Catalogo RaiPlay / Rakuten TV / RSI Play -> index.html (rieseguibile ogni giorno)."""
+"""Catalogo RaiPlay / RSI Play / LA7 Cinema -> index.html (rieseguibile ogni giorno)."""
 import json, re, os, gzip, pickle, time, html, unicodedata, datetime, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 D = os.path.dirname(os.path.abspath(__file__)); IM = os.path.join(D, 'imdb')
@@ -67,43 +67,40 @@ def rai_section(tipologia, plat_label):
             'popular': p in popular, 'label': e.get('label', '')})
     return out
 
-# ---------------- Rakuten ----------------
-RK = 'https://gizmo.rakuten.tv/v3/lists/{}?classification_id=36&device_identifier=web&locale=it&market_code=it&user_status=visitor&per_page=100&page={}'
-def rk_list(lid):
-    d = get(RK.format(lid, 1))
-    if not d: return []
-    # NB: l'API pubblica ignora la paginazione (restituisce sempre i primi 18): si aggregano tutte le liste del garden
-    return d['data']['contents']['data']
-
-def rakuten():
-    """Catalogo completo: URL dalla sitemap pubblica IT + dettaglio gizmo per ogni titolo; tiene solo quelli AVOD (gratis)."""
-    import gzip as gz
-    urls = []
-    for i in range(1, 10):
+# ---------------- LA7 Cinema ----------------
+L7 = 'https://www.la7.it'
+def gethtml(url):
+    for i in range(3):
         try:
-            raw = urllib.request.urlopen(urllib.request.Request(f'https://s3-eu-west-1.amazonaws.com/prod-kuato-static.rakuten.tv/sitemaps/it/sitemap{i}.xml.gz', headers=UA), timeout=60).read()
-        except Exception: break
-        urls += re.findall(r'<loc>https://www.rakuten.tv/it/(movies|tv_shows)/([^<]+)</loc>', gz.decompress(raw).decode())
-    Q = 'classification_id=36&device_identifier=web&locale=it&market_code=it&user_status=visitor'
-    def det(t):
-        d = (get(f'https://gizmo.rakuten.tv/v3/{t[0]}/{t[1]}?{Q}') or {}).get('data')
-        if not d: return None
-        kinds = {p.get('kind') for p in (d.get('labels') or {}).get('purchase_types', [])}
-        free = 'avod' in kinds or bool((d.get('view_options') or {}).get('public', {}).get('adverts'))
-        return d if free else None
-    alls = [x for x in pmap(det, sorted(set(urls)), 24) if x]
-    recent = {x['id'] for x in rk_list('free-recently-added')}
-    pop = {x['id'] for l in ('free-top-movies', 'free-top-tv-shows', 'free-best-of-catalogue') for x in rk_list(l)}
-    out = []
-    for x in alls:
-        sc = next((s for s in x.get('scores') or [] if (s.get('site') or {}).get('name') == 'IMDb'), {})
-        kind = x['type']
-        out.append({'platform': 'Rakuten TV ' + ('Film' if kind == 'movies' else 'Serie'), 'title': x['title'],
-            'year': str(x.get('year') or ''), 'genres': [g['name'] for g in x.get('genres', [])],
-            'url': f'https://www.rakuten.tv/it/{kind}/{x["id"]}', 'desc': x.get('short_plot') or (x.get('plot') or '')[:300], 'added': '',
-            'prima': x['id'] in recent, 'popular': x['id'] in pop, 'rating': sc.get('score'), 'votes': sc.get('amount_of_votes'),
-            'imdb': sc.get('href'), 'orig': x.get('original_title') or '', 'label': ''})
-    return out
+            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r: return r.read().decode('utf-8', 'ignore')
+        except Exception as e:
+            if i == 2: print('ERR', url, e); return ''
+            time.sleep(2)
+
+def la7():
+    links = []
+    for p in range(0, 30):
+        h = gethtml(f'{L7}/la7-cinema-tutti-i-film/rivedila7' + (f'?page={p}' if p else ''))
+        new = [l for l in dict.fromkeys(re.findall(r'href="(/la7-cinema-tutti-i-film/rivedila7/[^"?#]+)"', h)) if l not in links]
+        if not new: break
+        links += new
+    def det(path):
+        h = gethtml(L7 + path)
+        if not h: return None
+        meta = lambda k: html.unescape((re.search(r'<meta (?:property|name)="%s" content="([^"]*)"' % k, h) or [None, ''])[1])
+        t = meta('og:title').split('|'); d = meta('og:description')
+        title = t[0].strip() or path
+        gm = re.match(r'\s*Film\s*\(([^)]*)\)', d); ym = re.search(r'\((?:[^()]*\s)?(\d{4})\)', d)
+        genres = gm.group(1).split() if gm else ([t[1].strip()] if len(t) > 2 else [])
+        um = re.search(r'"uploadDate":\s*"(\d{4}-\d\d-\d\d)', h)
+        return {'platform': 'LA7 Cinema', 'title': title, 'year': ym.group(1) if ym else '', 'genres': genres,
+                'url': L7 + path, 'desc': re.sub(r'^Film \([^)]*\)\s*', '', d)[:300], 'added': um.group(1) if um else '',
+                'prima': bool(re.search(r'prima visione', h[:200000], re.I) and re.search(r'prima visione', d + t[0], re.I)),
+                'popular': False, 'label': ''}
+    out = {}
+    for e in pmap(det, links, 8):
+        if e: out.setdefault((norm(e['title']), e['year']), e)  # stesso film, repliche diverse
+    return list(out.values())
 
 # ---------------- RSI ----------------
 IL = 'https://il.srgssr.ch/integrationlayer/2.0/rsi'
@@ -189,8 +186,8 @@ def main():
     t0 = time.time(); S = {}
     S['RaiPlay'] = rai_section('film', 'RaiPlay Film') + rai_section('serieitaliane', 'RaiPlay Serie italiane')
     teche = rai_section('techerai', 'Teche Rai')
-    S['Rakuten TV'] = rakuten()
     S['RSI Play'] = rsi()
+    S['LA7 Cinema'] = la7()
     idx, ratings = imdb_index()
     stats = []
     for k, v in S.items():
