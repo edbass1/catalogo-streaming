@@ -135,6 +135,19 @@ def rsi():
     for e in out.values(): e['genres'] = sorted(e['genres'])
     return list(out.values())
 
+def rsi_seen(items, days=10):
+    """AGGIUNTI: data di prima comparsa per titolo, salvata in rsi_seen.json (branch 'data')."""
+    p = os.path.join(D, 'rsi_seen.json'); today = datetime.date.today()
+    lim = (today - datetime.timedelta(days=days)).isoformat()
+    seeding = not os.path.exists(p); seen = {} if seeding else json.load(open(p))
+    for e in items:
+        k = e['url']
+        if k not in seen:
+            # primo avvio: data pubblicazione RSI se recente, altrimenti "vecchio"
+            seen[k] = (e['added'] if e['added'] > lim else (today - datetime.timedelta(days=days + 1)).isoformat()) if seeding else today.isoformat()
+        e['seen'] = seen[k]; e['prima'] = seen[k] > lim
+    json.dump(seen, open(p, 'w'), indent=0, sort_keys=True)
+
 # ---------------- IMDb ----------------
 def imdb_index():
     pk = os.path.join(IM, 'index.pkl'); r = os.path.join(IM, 'title.ratings.tsv.gz')
@@ -190,7 +203,7 @@ def main():
     t0 = time.time(); S = {}
     S['RaiPlay'] = rai_section('film', 'RaiPlay Film') + rai_section('serieitaliane', 'RaiPlay Serie italiane')
     teche = rai_section('techerai', 'Teche Rai')
-    S['RSI Play'] = rsi()
+    S['RSI Play'] = rsi(); rsi_seen(S['RSI Play'])
     S['LA7 Cinema'] = la7()
     idx, ratings = imdb_index()
     stats = []

@@ -4,7 +4,7 @@ on:
     - cron: '17 4 * * *'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 concurrency:
@@ -31,8 +31,17 @@ jobs:
           for f in title.ratings title.basics title.akas; do
             [ -f imdb/$f.tsv.gz ] || curl -sfL -o imdb/$f.tsv.gz https://datasets.imdbws.com/$f.tsv.gz
           done
+      - name: Recupera stato RSI
+        run: git fetch origin data && git show origin/data:rsi_seen.json > /tmp/s.json && mv /tmp/s.json rsi_seen.json || echo "nessuno stato, primo avvio"
       - name: Genera catalogo
         run: python3 build.py
+      - name: Salva stato RSI
+        run: |
+          git config user.name github-actions; git config user.email github-actions@users.noreply.github.com
+          d=$(mktemp -d); git worktree add --orphan -b tmpdata "$d" 2>/dev/null || git worktree add --detach "$d"
+          cd "$d"; git fetch origin data && git checkout -B data origin/data || git checkout --orphan data
+          git rm -rqf . 2>/dev/null || true; cp "$GITHUB_WORKSPACE/rsi_seen.json" .
+          git add rsi_seen.json; git commit -qm "Stato RSI $(date -u +%F)" || true; git push origin HEAD:data
       - name: Prepara sito
         run: mkdir -p _site && cp index.html catalogo.json _site/
       - uses: actions/upload-pages-artifact@v3
