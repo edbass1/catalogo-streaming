@@ -224,7 +224,6 @@ def main():
     teche.sort(key=lambda e: e['added'], reverse=True)
     for k, v in S.items():
         f = sum(e['type'] == 'film' for e in v); print(f'{k}: {f} film, {len(v) - f} serie')
-    stats.append(f'Teche Rai: {len(teche)} titoli')
     s = ' | '.join(stats); print(s)
     open(os.path.join(D, 'index.html'), 'w', encoding='utf-8').write(page(S, [], s))
     json.dump({'sections': S}, open(os.path.join(D, 'catalogo.json'), 'w'), ensure_ascii=False)
