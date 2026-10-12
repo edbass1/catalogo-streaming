@@ -205,7 +205,12 @@ def main():
     teche = rai_section('techerai', 'Teche Rai')
     S['RSI Play'] = rsi(); rsi_seen(S['RSI Play'])
     S['LA7 Cinema'] = la7()
+    def eps(e):
+        d = get(e['url'] + '.json', tries=2) or {}
+        e['episodes'] = sum((st.get('episode_size') or {}).get('number') or 0 for b in d.get('blocks', []) for st in b.get('sets', []))
+    pmap(eps, teche)
     S['Teche Rai'] = teche
+    print('Teche box set (>1 episodio):', sum(e['episodes'] > 1 for e in teche))
     idx, ratings = imdb_index()
     stats = []
     for k, v in S.items():
