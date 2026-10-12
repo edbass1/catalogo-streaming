@@ -9,17 +9,18 @@ nav button.on,.sub button.on{background:#e50914}.wrap{padding:12px 18px}small{co
 .tag{display:inline-block;font-size:11px;background:#333;border-radius:4px;padding:1px 5px;margin:2px 2px 0 0}
 .pv{background:#0a7}.cl{background:#c80}p{font-size:13px;color:#bbb;margin:6px 0 0}#gen label{margin-right:10px;font-size:13px}
 </style></head><body><header><b>Catalogo gratuito: RaiPlay · RSI Play · LA7 Cinema</b><br><small>Aggiornato: __NOW__ — __STATS__</small>
-<nav id="nav"></nav></header><div class="wrap"><div class="sub" id="sub"></div><div id="gen"></div><div class="grid" id="g"></div></div>
+<nav id="nav"></nav></header><div class="wrap"><div class="sub" id="typ"></div><div class="sub" id="sub"></div><div id="gen"></div><div class="grid" id="g"></div></div>
 <script>
-const DATA=__DATA__;let S=Object.keys(DATA.sections)[0],V='voto',G=new Set();
+const DATA=__DATA__;let S=Object.keys(DATA.sections)[0],V='voto',G=new Set(),T='tutti';
 const subs=[['voto','Voto IMDb'],['prima','Prime visioni / novità'],['generi','Per genere'],['clou','IL CLOU']];
-function nav(){const n=document.getElementById('nav');n.innerHTML='';[...Object.keys(DATA.sections),'Teche Rai (recenti)'].forEach(k=>{const b=document.createElement('button');b.textContent=k;b.className=k==S?'on':'';b.onclick=()=>{S=k;G.clear();render()};n.appendChild(b)})}
+function nav(){const n=document.getElementById('nav');n.innerHTML='';[...Object.keys(DATA.sections),'Teche Rai (recenti)'].forEach(k=>{const b=document.createElement('button');b.textContent=k;b.className=k==S?'on':'';b.onclick=()=>{S=k;G.clear();T='tutti';render()};n.appendChild(b)})}
 function card(e){return `<div class="c">${e.rating?`<span class="r">${e.rating}</span>`:''}<a href="${e.url}" target="_blank">${esc(e.title)}</a> <small>${e.year||''}</small><br><small>${esc(e.platform)}${e.added?' · agg. '+e.added:''}${e.votes?' · '+e.votes.toLocaleString('it')+' voti':''}</small><br>${e.prima?'<span class="tag pv">Prima visione/novità</span>':''}${e.clou?'<span class="tag cl">Il Clou</span>':''}${e.genres.map(g=>`<span class="tag">${esc(g)}</span>`).join('')}<p>${esc((e.desc||'').slice(0,220))}</p></div>`}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function render(){nav();const sub=document.getElementById('sub'),gen=document.getElementById('gen'),g=document.getElementById('g');gen.innerHTML='';
+function render(){nav();const typ=document.getElementById('typ');typ.innerHTML='';const sub=document.getElementById('sub'),gen=document.getElementById('gen'),g=document.getElementById('g');gen.innerHTML='';
 if(!DATA.sections[S]){sub.innerHTML='<small>Ultimi titoli aggiunti alle Teche Rai (data stimata dalla pubblicazione delle immagini)</small>';g.innerHTML=DATA.teche.map(card).join('');return}
 sub.innerHTML='';subs.forEach(([k,l])=>{const b=document.createElement('button');b.textContent=l;b.className=k==V?'on':'';b.onclick=()=>{V=k;render()};sub.appendChild(b)});
 let L=DATA.sections[S].filter(e=>!e.excluded);
+if(new Set(DATA.sections[S].map(e=>e.type)).size>1){[['tutti','Tutti'],['film','Film'],['serie','Serie TV']].forEach(([k,l])=>{const b=document.createElement('button');b.textContent=l;b.className=k==T?'on':'';b.onclick=()=>{T=k;G.clear();render()};typ.appendChild(b)});if(T!='tutti')L=L.filter(e=>e.type==T)}
 if(V=='generi'){const all=[...new Set(L.flatMap(e=>e.genres))].sort();gen.innerHTML=all.map(x=>`<label><input type=checkbox value="${esc(x)}" ${G.has(x)?'checked':''}> ${esc(x)}</label>`).join('');gen.querySelectorAll('input').forEach(i=>i.onchange=()=>{i.checked?G.add(i.value):G.delete(i.value);render()});if(G.size)L=L.filter(e=>e.genres.some(x=>G.has(x)))}
 if(V=='prima')L=L.filter(e=>e.prima);if(V=='clou')L=L.filter(e=>e.clou);
 L.sort((a,b)=>V=='clou'?(b.votes||0)-(a.votes||0):(b.rating||0)-(a.rating||0));g.innerHTML=L.map(card).join('')||'<small>Nessun titolo</small>'}

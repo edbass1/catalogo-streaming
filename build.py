@@ -183,7 +183,7 @@ def enrich(items, idx, ratings):
 # ---------------- HTML ----------------
 def page(sections, teche, stats):
     data = json.dumps({'sections': sections, 'teche': teche}, ensure_ascii=False).replace('</', '<\\/')
-    now = datetime.datetime.now().strftime('%d/%m/%Y %H:%M')
+    now = datetime.datetime.now(__import__('zoneinfo').ZoneInfo('Europe/Rome')).strftime('%d/%m/%Y %H:%M')
     return open(os.path.join(D, 'template.html'), encoding='utf-8').read().replace('__DATA__', data).replace('__NOW__', now).replace('__STATS__', html.escape(stats))
 
 def main():
@@ -197,11 +197,14 @@ def main():
     for k, v in S.items():
         tot = len(v); h = enrich(v, idx, ratings)
         for e in v:
+            e['type'] = 'serie' if 'Serie' in e['platform'] else 'film'
             e['excluded'] = any(EXCL.search(g) for g in e['genres'])
             e['clou'] = (e.get('votes') or 0) >= CLOU_VOTES or (e['popular'] and (e.get('rating') or 0) >= 6.5)
         stats.append(f'{k}: {tot} titoli, {h} con voto IMDb, {sum(e["excluded"] for e in v)} esclusi per genere, '
                      f'{sum(e["prima"] for e in v)} prime visioni/novità, {sum(e["clou"] and not e["excluded"] for e in v)} Il Clou')
     teche.sort(key=lambda e: e['added'], reverse=True)
+    for k, v in S.items():
+        f = sum(e['type'] == 'film' for e in v); print(f'{k}: {f} film, {len(v) - f} serie')
     stats.append(f'Teche Rai: {len(teche)} titoli')
     s = ' | '.join(stats); print(s)
     open(os.path.join(D, 'index.html'), 'w', encoding='utf-8').write(page(S, teche[:150], s))
