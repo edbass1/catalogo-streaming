@@ -1,0 +1,6 @@
+imdb/
+build.log
+index.html
+catalogo.json
+_site/
+__pycache__/

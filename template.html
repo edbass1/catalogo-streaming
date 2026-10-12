@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Catalogo RaiPlay · Rakuten · RSI</title><style>
+body{font-family:system-ui,sans-serif;margin:0;background:#111;color:#eee}header{padding:12px 18px;background:#1c1c1c}
+nav button,.sub button{background:#2a2a2a;color:#eee;border:0;padding:8px 14px;margin:3px;border-radius:6px;cursor:pointer}
+nav button.on,.sub button.on{background:#e50914}.wrap{padding:12px 18px}small{color:#999}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.c{background:#1e1e1e;border-radius:8px;padding:10px}.c a{color:#fff;font-weight:600;text-decoration:none}
+.r{float:right;background:#f5c518;color:#000;border-radius:4px;padding:1px 6px;font-weight:700}
+.tag{display:inline-block;font-size:11px;background:#333;border-radius:4px;padding:1px 5px;margin:2px 2px 0 0}
+.pv{background:#0a7}.cl{background:#c80}p{font-size:13px;color:#bbb;margin:6px 0 0}#gen label{margin-right:10px;font-size:13px}
+</style></head><body><header><b>Catalogo gratuito: RaiPlay · Rakuten TV · RSI Play</b><br><small>Aggiornato: __NOW__ — __STATS__</small>
+<nav id="nav"></nav></header><div class="wrap"><div class="sub" id="sub"></div><div id="gen"></div><div class="grid" id="g"></div></div>
+<script>
+const DATA=__DATA__;let S=Object.keys(DATA.sections)[0],V='voto',G=new Set();
+const subs=[['voto','Voto IMDb'],['prima','Prime visioni / novità'],['generi','Per genere'],['clou','IL CLOU']];
+function nav(){const n=document.getElementById('nav');n.innerHTML='';[...Object.keys(DATA.sections),'Teche Rai (recenti)'].forEach(k=>{const b=document.createElement('button');b.textContent=k;b.className=k==S?'on':'';b.onclick=()=>{S=k;G.clear();render()};n.appendChild(b)})}
+function card(e){return `<div class="c">${e.rating?`<span class="r">${e.rating}</span>`:''}<a href="${e.url}" target="_blank">${esc(e.title)}</a> <small>${e.year||''}</small><br><small>${esc(e.platform)}${e.added?' · agg. '+e.added:''}${e.votes?' · '+e.votes.toLocaleString('it')+' voti':''}</small><br>${e.prima?'<span class="tag pv">Prima visione/novità</span>':''}${e.clou?'<span class="tag cl">Il Clou</span>':''}${e.genres.map(g=>`<span class="tag">${esc(g)}</span>`).join('')}<p>${esc((e.desc||'').slice(0,220))}</p></div>`}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function render(){nav();const sub=document.getElementById('sub'),gen=document.getElementById('gen'),g=document.getElementById('g');gen.innerHTML='';
+if(!DATA.sections[S]){sub.innerHTML='<small>Ultimi titoli aggiunti alle Teche Rai (data stimata dalla pubblicazione delle immagini)</small>';g.innerHTML=DATA.teche.map(card).join('');return}
+sub.innerHTML='';subs.forEach(([k,l])=>{const b=document.createElement('button');b.textContent=l;b.className=k==V?'on':'';b.onclick=()=>{V=k;render()};sub.appendChild(b)});
+let L=DATA.sections[S].filter(e=>!e.excluded);
+if(V=='generi'){const all=[...new Set(L.flatMap(e=>e.genres))].sort();gen.innerHTML=all.map(x=>`<label><input type=checkbox value="${esc(x)}" ${G.has(x)?'checked':''}> ${esc(x)}</label>`).join('');gen.querySelectorAll('input').forEach(i=>i.onchange=()=>{i.checked?G.add(i.value):G.delete(i.value);render()});if(G.size)L=L.filter(e=>e.genres.some(x=>G.has(x)))}
+if(V=='prima')L=L.filter(e=>e.prima);if(V=='clou')L=L.filter(e=>e.clou);
+L.sort((a,b)=>V=='clou'?(b.votes||0)-(a.votes||0):(b.rating||0)-(a.rating||0));g.innerHTML=L.map(card).join('')||'<small>Nessun titolo</small>'}
+render();</script></body></html>
