@@ -190,7 +190,7 @@ def enrich(items, idx, ratings):
         if not c and 'Serie' in e['platform'] and len({x[1] for x in cands}) == 1: c = cands
         if c: best = max(set(c), key=lambda x: ratings[x[1]][1])
         if best:
-            e['rating'], e['votes'] = ratings[best[1]]; e['imdb'] = 'https://www.imdb.com/title/' + best[1]; hit += 1
+            e['rating'], e['votes'] = ratings[best[1]]; e['tconst'] = best[1]; e['imdb'] = 'https://www.imdb.com/title/' + best[1] + '/'; hit += 1
     return hit
 
 # ---------------- HTML ----------------
