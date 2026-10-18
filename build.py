@@ -27,6 +27,10 @@ def norm(s):
 RAI = 'https://www.raiplay.it'
 def rai_genre_pages(tipologia):
     d = get(f'{RAI}/tipologia/{tipologia}/index.json'); gens = []; blocks = {}
+    # RaiPlay a volte restituisce una risposta vuota/non JSON: non deve bloccare
+    # l'intera compilazione del catalogo.
+    if not isinstance(d, dict) or not isinstance(d.get('contents'), list):
+        raise RuntimeError(f'Indice RaiPlay non disponibile o non valido: {tipologia}')
     for b in d['contents']:
         if 'Generi' in b.get('type', '') or b['name'].startswith('Generi'):
             gens = [(c['name'], c['path_id']) for c in b['contents']]
@@ -201,8 +205,43 @@ def page(sections, teche, stats):
 
 def main():
     t0 = time.time(); S = {}
-    S['RaiPlay'] = rai_section('film', 'RaiPlay Film') + rai_section('serieitaliane', 'RaiPlay Serie italiane')
-    teche = rai_section('techerai', 'Teche Rai')
+
+    # Recupera l'ultimo catalogo pubblicato: se RaiPlay è temporaneamente
+    # irraggiungibile, conserva i dati precedenti invece di svuotare le sezioni.
+    previous = None
+    for old_path in (os.path.join(D, 'catalogo.json'),
+                     'https://edbass1.github.io/catalogo-streaming/catalogo.json'):
+        try:
+            if old_path.startswith('http'):
+                previous = get(old_path, tries=1)
+            elif os.path.exists(old_path):
+                with open(old_path, encoding='utf-8') as old_file:
+                    previous = json.load(old_file)
+            if isinstance(previous, dict) and isinstance(previous.get('sections'), dict):
+                break
+            previous = None
+        except Exception as e:
+            print('WARN impossibile leggere il catalogo precedente:', e)
+            previous = None
+
+    def rai_safe(tipologia, plat_label):
+        try:
+            return rai_section(tipologia, plat_label)
+        except Exception as e:
+            old_items = []
+            if previous:
+                for section in previous.get('sections', {}).values():
+                    if isinstance(section, list):
+                        old_items.extend(x for x in section
+                                         if isinstance(x, dict) and x.get('platform') == plat_label)
+            if old_items:
+                print(f'WARN {plat_label}: RaiPlay non disponibile ({e}); mantengo {len(old_items)} elementi precedenti')
+                return old_items
+            print(f'WARN {plat_label}: RaiPlay non disponibile ({e}); nessun dato precedente recuperabile')
+            return []
+
+    S['RaiPlay'] = rai_safe('film', 'RaiPlay Film') + rai_safe('serieitaliane', 'RaiPlay Serie italiane')
+    teche = rai_safe('techerai', 'Teche Rai')
     S['RSI Play'] = rsi(); rsi_seen(S['RSI Play'])
     S['LA7 Cinema'] = la7()
     def eps(e):
