@@ -206,7 +206,7 @@ def page(sections, teche, stats):
 def main():
     t0 = time.time(); S = {}
 
-    # Recupera l'ultimo catalogo pubblicato: se RaiPlay è temporaneamente
+    # Recupera l'ultimo catalogo pubblicato (Pages): se RaiPlay è temporaneamente
     # irraggiungibile, conserva i dati precedenti invece di svuotare le sezioni.
     previous = None
     for old_path in (os.path.join(D, 'catalogo.json'),
