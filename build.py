@@ -72,7 +72,7 @@ def rai_section(tipologia, plat_label):
     return out
 
 # ---------------- LA7 Cinema ----------------
-L7 = 'https://www.la7.it'
+L7 = 'https://www.la7play.it'
 def gethtml(url):
     for i in range(5):
         time.sleep(1.5)  # la7.it risponde 429 se le richieste sono troppo ravvicinate
@@ -86,7 +86,13 @@ def la7():
     links = []
     for p in range(0, 30):
         h = gethtml(f'{L7}/la7-cinema-tutti-i-film/rivedila7' + (f'?page={p}' if p else ''))
-        new = [l for l in dict.fromkeys(re.findall(r'href="(/la7-cinema-tutti-i-film/rivedila7/[^"?#]+)"', h)) if l not in links]
+        # La7Play usa una pagina Next.js: i link possono essere assoluti, relativi o
+        # presenti nei dati di hydration (slash escaped). Normalizzo prima di estrarli.
+        h = html.unescape(h).replace('\\/', '/')
+        paths = re.findall(
+            r"""(?:https?://(?:www\.)?la7play\.it)?(/la7-cinema-tutti-i-film/rivedila7/[^"'\\\s<>?#]+)""",
+            h, re.I)
+        new = [l for l in dict.fromkeys(paths) if l not in links]
         if not new: break
         links += new
     def det(path):
@@ -95,12 +101,19 @@ def la7():
             t = re.sub(r'-\d\d-\d\d-\d{4}-\d+$', '', path.rsplit('/', 1)[-1]).replace('-', ' ').capitalize()
             return {'platform': 'LA7 Cinema', 'title': t, 'year': '', 'genres': [], 'url': L7 + path, 'desc': '',
                     'added': '', 'prima': False, 'popular': False, 'label': ''}
-        meta = lambda k: html.unescape((re.search(r'<meta (?:property|name)="%s" content="([^"]*)"' % k, h) or [None, ''])[1])
-        t = meta('og:title').split('|'); d = meta('og:description')
+        def meta(k):
+            for tag in re.findall(r'<meta\b[^>]*>', h, re.I):
+                if re.search(r'(?:property|name)\s*=\s*["\']%s["\']' % re.escape(k), tag, re.I):
+                    m = re.search(r'content\s*=\s*["\']([^"\']*)["\']', tag, re.I)
+                    if m: return html.unescape(m.group(1))
+            return ''
+        page_title = re.sub(r'</?title[^>]*>', '', (re.search(r'<title[^>]*>(.*?)</title>', h, re.I | re.S) or [None, ''])[1]).strip()
+        t = (meta('og:title') or page_title).split('|')
+        d = meta('og:description') or meta('description')
         title = t[0].strip() or path
         gm = re.match(r'\s*Film\s*\(([^)]*)\)', d); ym = re.search(r'\((?:[^()]*\s)?(\d{4})\)', d)
         genres = gm.group(1).split() if gm else ([t[1].strip()] if len(t) > 2 else [])
-        um = re.search(r'"uploadDate":\s*"(\d{4}-\d\d-\d\d)', h)
+        um = re.search(r'"(?:uploadDate|datePublished|dateCreated)":\s*"(\d{4}-\d\d-\d\d)', h)
         return {'platform': 'LA7 Cinema', 'title': title, 'year': ym.group(1) if ym else '', 'genres': genres,
                 'url': L7 + path, 'desc': re.sub(r'^Film \([^)]*\)\s*', '', d)[:300], 'added': um.group(1) if um else '',
                 'prima': bool(re.search(r'prima visione', h[:200000], re.I) and re.search(r'prima visione', d + t[0], re.I)),
@@ -243,7 +256,16 @@ def main():
     S['RaiPlay'] = rai_safe('film', 'RaiPlay Film') + rai_safe('serieitaliane', 'RaiPlay Serie italiane')
     teche = rai_safe('techerai', 'Teche Rai')
     S['RSI Play'] = rsi(); rsi_seen(S['RSI Play'])
-    S['LA7 Cinema'] = la7()
+    la7_items = la7()
+    if not la7_items and previous:
+        old_la7 = previous.get('sections', {}).get('LA7 Cinema', [])
+        if old_la7:
+            print(f'WARN LA7 Cinema: raccolta vuota; mantengo {len(old_la7)} elementi precedenti')
+            la7_items = old_la7
+    # Una risposta vuota del sito sorgente non deve mai cancellare il catalogo pubblicato.
+    if not la7_items:
+        raise RuntimeError('LA7 Cinema: nessun film recuperato; interrompo la pubblicazione per non svuotare il catalogo')
+    S['LA7 Cinema'] = la7_items
     def eps(e):
         d = get(e['url'] + '.json', tries=2) or {}
         e['episodes'] = sum((st.get('episode_size') or {}).get('number') or 0 for b in d.get('blocks', []) for st in b.get('sets', []))
