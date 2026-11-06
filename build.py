@@ -205,10 +205,7 @@ def main():
     S['RaiPlay'] = rai_safe('film', 'RaiPlay Film') + rai_safe('serieitaliane', 'RaiPlay Serie italiane')
     teche = rai_safe('techerai', 'Teche Rai')
     S['RSI Play'] = rsi(); rsi_seen(S['RSI Play'])
-    # La7Play non autorizza l'estrazione automatizzata dei contenuti.
-    # Mantengo gli eventuali dati già pubblicati senza interrogare il sito.
-    S['LA7 Cinema'] = (previous.get('sections', {}).get('LA7 Cinema', [])
-                      if previous else [])
+    # LA7 Cinema rimosso dal catalogo.
     def eps(e):
         d = get(e['url'] + '.json', tries=2) or {}
         e['episodes'] = sum((st.get('episode_size') or {}).get('number') or 0 for b in d.get('blocks', []) for st in b.get('sets', []))
