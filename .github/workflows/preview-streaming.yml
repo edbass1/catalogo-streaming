@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - name: Checkout
+      - name: Checkout branch di prova
         uses: actions/checkout@v4
         with:
           ref: test-cataloghi-tmdb
