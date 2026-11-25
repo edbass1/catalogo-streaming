@@ -1,0 +1,37 @@
+name: Anteprima cataloghi streaming
+on:
+  push:
+    branches:
+      - test-cataloghi-tmdb
+    paths:
+      - 'experimental/build_streaming_catalog.py'
+      - '.github/workflows/preview-streaming.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: test-cataloghi-tmdb
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Genera cataloghi di prova
+        run: python experimental/build_streaming_catalog.py
+      - name: Pubblica anteprima come artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: anteprima-cataloghi-streaming
+          path: |
+            streaming-preview.html
+            streaming-catalog.json
+          if-no-files-found: error
+          retention-days: 14
