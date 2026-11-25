@@ -1,0 +1,26 @@
+name: Test StreamX cataloghi (solo diagnostica)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-streamx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verifica campione Netflix e Prime Italia
+        run: python experimental/test_streamx.py
+      - name: Salva rapporto diagnostico
+        uses: actions/upload-artifact@v4
+        with:
+          name: streamx-test-report
+          path: streamx-test-report.json
+          if-no-files-found: error
