@@ -1,9 +1,11 @@
 # Catalogo streaming gratuito: RaiPlay · RSI Play · LA7 Cinema
 
-Pagina statica che si aggiorna ogni giorno da sola (GitHub Actions, ore 04:17 UTC) e raccoglie i cataloghi di:
+Pagina statica che si aggiorna automaticamente con GitHub Actions e raccoglie i cataloghi di:
 
 - **RaiPlay**: Film, Serie italiane e Teche Rai (ultimi titoli aggiunti)
 - **RSI Play**: Film e Serie TV
+- **Sky Cinema**: catalogo film pubblico Sky
+- **Sky Serie**: catalogo serie TV pubblico Sky
 - **LA7 Cinema**: film disponibili su RivediLa7 (sezione La7 Cinema)
 
 Per ogni piattaforma ci sono le sottosezioni **Voto IMDb**, **Prime visioni / novità**, **Per genere** e **IL CLOU**
