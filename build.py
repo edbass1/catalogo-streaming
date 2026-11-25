@@ -2,6 +2,7 @@
 """Catalogo RaiPlay / RSI Play / LA7 Cinema -> index.html (rieseguibile ogni giorno)."""
 import json, re, os, gzip, pickle, time, html, unicodedata, datetime, urllib.request
 from concurrent.futures import ThreadPoolExecutor
+from experimental.build_streaming_catalog import SKY_PAGES, load_sky_catalog
 D = os.path.dirname(os.path.abspath(__file__)); IM = os.path.join(D, 'imdb')
 UA = {'User-Agent': 'Mozilla/5.0'}
 EXCL = re.compile(r'sentiment|romant|love|bambin|kids|junior|ragazzi|animazion|famiglia|family|azione|action|reality', re.I)
@@ -205,6 +206,25 @@ def main():
     S['RaiPlay'] = rai_safe('film', 'RaiPlay Film') + rai_safe('serieitaliane', 'RaiPlay Serie italiane')
     teche = rai_safe('techerai', 'Teche Rai')
     S['RSI Play'] = rsi(); rsi_seen(S['RSI Play'])
+    # Cataloghi pubblici Sky Cinema e Sky Serie.
+    for sky_label, (sky_url, sky_kind, sky_route, sky_page_name) in SKY_PAGES.items():
+        try:
+            sky_rows = load_sky_catalog(sky_label, sky_url, sky_kind, sky_route, sky_page_name)
+            S[sky_label] = [{
+                'platform': sky_label, 'title': x['title'], 'year': '',
+                'genres': [], 'url': x['url'], 'desc': '',
+                'added': '', 'prima': False, 'popular': False, 'label': '',
+                'poster': x.get('poster', '')
+            } for x in sky_rows]
+            print(f'{sky_label}: {len(S[sky_label])} titoli')
+        except Exception as e:
+            old_items = previous.get('sections', {}).get(sky_label, []) if previous else []
+            if isinstance(old_items, list) and old_items:
+                S[sky_label] = old_items
+                print(f'WARN {sky_label}: fonte non disponibile ({e}); mantengo {len(old_items)} elementi precedenti')
+            else:
+                S[sky_label] = []
+                print(f'WARN {sky_label}: fonte non disponibile ({e})')
     # LA7 Cinema rimosso dal catalogo.
     def eps(e):
         d = get(e['url'] + '.json', tries=2) or {}
