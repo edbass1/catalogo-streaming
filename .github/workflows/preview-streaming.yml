@@ -37,3 +37,5 @@ jobs:
           retention-days: 14
 
 # Forza una nuova anteprima dopo l'aggiornamento del parser Sky.
+
+# Build cataloghi Sky con paginazione.
