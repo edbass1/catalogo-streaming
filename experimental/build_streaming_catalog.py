@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Build a preview of Sky / Netflix / Prime Video catalogs without API keys.
+"""Build a preview of Sky / Netflix catalogs without API keys.
 
-Netflix and Prime availability is resolved through StreamX (Cinemeta discovery +
+Netflix availability is resolved through StreamX (Cinemeta discovery +
 JustWatch availability). This is a popularity-based index, NOT a guaranteed
 complete provider catalog. Sky entries are read from Sky's public catalog pages.
 """
@@ -69,11 +69,10 @@ def check_streaming(kind, meta):
         data = get_json(f"{STREAMX}/streaming/{kind}/{urllib.parse.quote(ident, safe='')}?country=IT")
         providers = data.get("providers") or []
         netflix = [p for p in providers if re.search(r"netflix", p.get("name", ""), re.I)]
-        prime = [p for p in providers if re.search(r"amazon prime video|prime video", p.get("name", ""), re.I)]
         out = []
-        for provider in netflix + prime:
+        for provider in netflix:
             out.append({
-                "provider": "Netflix" if re.search(r"netflix", provider.get("name", ""), re.I) else "Prime Video",
+                "provider": "Netflix",
                 "provider_name": provider.get("name", ""),
                 "kind": kind,
                 "id": ident,
@@ -179,13 +178,13 @@ def main():
     rows.sort(key=lambda x: (x.get("provider", ""), x.get("kind", ""), str(x.get("title", "")).casefold()))
     Path("streaming-catalog.json").write_text(json.dumps({"items": rows, "report": report}, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    groups = {p: [x for x in rows if x.get("provider") == p] for p in ("Sky Cinema", "Sky Serie", "Netflix", "Prime Video")}
+    groups = {p: [x for x in rows if x.get("provider") == p] for p in ("Sky Cinema", "Sky Serie", "Netflix")}
     nav = "".join(f'<button onclick="show(\'{p}\')">{p} <span>{len(v)}</span></button>' for p, v in groups.items())
     payload = json.dumps(groups, ensure_ascii=False).replace("</", "<\\/")
     page = """<!doctype html><html lang="it"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Catalogo Streaming — anteprima</title><style>
 *{box-sizing:border-box}body{margin:0;background:#101114;color:#eee;font:15px system-ui}header{padding:20px;background:#1a1b20;position:sticky;top:0;z-index:2}h1{font-size:22px;margin:0 0 5px}small{color:#aaa}nav{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}button{background:#30323a;color:white;border:0;border-radius:7px;padding:9px 13px;cursor:pointer}button.active{background:#e50914}button span{opacity:.7}input{margin:14px 0 4px;padding:10px;width:min(100%,420px);border:0;border-radius:6px}.grid{padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}.card{display:grid;grid-template-columns:90px 1fr;gap:12px;background:#1d1f25;border-radius:9px;padding:10px;min-height:130px}.card img{width:90px;aspect-ratio:2/3;object-fit:cover;border-radius:5px}.noimg{width:90px;color:#777;font-size:11px}.info{min-width:0}.info a{color:#fff;text-decoration:none}.info small{display:block;margin-top:5px}.info p{font-size:12px;color:#aaa;margin:7px 0}.note{padding:0 16px 12px;color:#aaa;font-size:12px}
-</style><header><h1>Catalogo Streaming — anteprima</h1><small id="count">Cataloghi aggiornati automaticamente</small><nav>""" + nav + """</nav><input id="q" placeholder="Cerca un titolo…"></header><div class="note">Netflix e Prime Video: titoli individuati nel catalogo popolare Cinemeta e verificati per l'Italia tramite StreamX/JustWatch. Non è garantita la copertura completa. Sky: elenco pubblico del sito ufficiale Sky.</div><main class="grid" id="grid"></main><script>
+</style><header><h1>Catalogo Streaming — anteprima</h1><small id="count">Cataloghi aggiornati automaticamente</small><nav>""" + nav + """</nav><input id="q" placeholder="Cerca un titolo…"></header><div class="note">Netflix: titoli individuati nel catalogo popolare Cinemeta e verificati per l'Italia tramite StreamX/JustWatch. Non è garantita la copertura completa. Sky: elenco pubblico del sito ufficiale Sky.</div><main class="grid" id="grid"></main><script>
 const DATA=""" + payload + """;
 let active='Netflix';
 function show(p){active=p;document.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.textContent.startsWith(p)));render()}
