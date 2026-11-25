@@ -31,8 +31,9 @@ class SkyParser(HTMLParser):
         attrs = dict(attrs)
         if tag == "a":
             href = attrs.get("href", "")
+            path = urllib.parse.urlparse(href).path
             prefix = "/film/" if self.kind == "movie" else "/serie-tv/"
-            if href.startswith(prefix) and href.rstrip("/") != prefix.rstrip("/"):
+            if prefix in path and path.rstrip("/") != prefix.rstrip("/"):
                 self.current = {
                     "title": attrs.get("aria-label") or attrs.get("title") or "",
                     "url": urllib.parse.urljoin("https://programmi.sky.it", href),
