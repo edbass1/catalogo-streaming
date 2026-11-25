@@ -1,24 +1,34 @@
-# Test cataloghi streaming TMDB Italia
+# Fonti senza token: JustWatch e Sky
 
-Questo prototipo è isolato nel branch `test-cataloghi-tmdb`: non modifica il sito pubblicato né il workflow attuale.
+Il branch `test-cataloghi-tmdb` è un branch di lavoro separato e non modifica il sito pubblicato.
 
-## Cosa prova
-- Risolve i provider Netflix e Prime Video dalla lista TMDB per la regione italiana (IT), senza hardcodare gli ID.
-- Recupera film e serie TV in modalità abbonamento (`flatrate`), in italiano.
-- Scrive `catalogo_extra.json` separato dal catalogo attuale.
+## Netflix Italia e Prime Video Italia
 
-## Avvio locale
-1. Crea un account TMDB e richiedi una API key / Read Access Token dalle impostazioni API.
-2. Imposta il token nell'ambiente, senza inserirlo nel repository:
-   ```bash
-   export TMDB_READ_ACCESS_TOKEN='il_tuo_read_access_token'
-   ```
-3. Esegui:
-   ```bash
-   python3 experimental/catalogo_streaming_tmdb.py
-   ```
+Fonti pubbliche verificate:
+- Netflix: https://www.justwatch.com/it/provider/netflix
+- Prime Video: https://www.justwatch.com/it/provider/amazon-prime-video
 
-Per il test iniziale scarica fino a 5 pagine per tipo (film e serie, 20 risultati per pagina). Si può aumentare `TMDB_TEST_PAGES` dopo aver verificato risposta e limiti API.
+Le pagine pubbliche presentano catalogo, film/serie e paginazione. Sono consultabili senza account o token. La raccolta automatica dal sito può essere fragile e va verificata sul markup effettivo; non è un'API ufficiale né garantita. Prima dell'integrazione va controllato il rispetto dei termini e un limite di richieste ragionevole.
 
-## Nota
-La disponibilità streaming in TMDB è fornita da JustWatch e richiede attribuzione. Il prototipo non viene ancora eseguito da GitHub Actions e non è integrato in `index.html`: prima va verificata la qualità e la copertura dei dati. Sky canali lineari (palinsesto Sky Cinema/Intrattenimento) resta una fonte separata da risolvere.
+Pagine film dedicate:
+- https://www.justwatch.com/it/provider/netflix/film
+- https://www.justwatch.com/it/provider/amazon-prime-video/film
+
+## Sky Italia
+
+Fonte primaria:
+- https://programmi.sky.it/
+
+Il sito ufficiale espone schede editoriali di film e serie TV, descrizioni e stagioni. È una fonte adatta a un primo test di raccolta pubblica, ma non è confermato un feed/API aperto con l'intero catalogo e la programmazione lineare di tutti i canali Sky.
+
+Per distinguere i due obiettivi:
+1. catalogo editoriale Sky (film e serie pubblicati su programmi.sky.it);
+2. palinsesto dei canali Sky Cinema e Intrattenimento (film/episodi trasmessi e orari).
+
+La seconda parte richiede una guida TV/palinsesto accessibile e verificabile, non va dedotta dal catalogo editoriale.
+
+## Stato
+
+- Il prototipo TMDB con token è stato rimosso perché l'utente non vuole credenziali.
+- Nessun cambiamento è stato pubblicato sul branch `main`.
+- Prima di aggiungere scraper o workflow, occorre testare il markup pubblico in un ambiente con accesso web, salvare dati di esempio e verificare titoli, URL, poster e paginazione.
