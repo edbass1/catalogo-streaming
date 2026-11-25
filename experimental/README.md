@@ -1,34 +1,29 @@
-# Fonti senza token: JustWatch e Sky
+# Verifica fonti per i nuovi cataloghi
 
-Il branch `test-cataloghi-tmdb` è un branch di lavoro separato e non modifica il sito pubblicato.
+Il branch `test-cataloghi-tmdb` è separato da `main`: il sito pubblicato non viene modificato finché la raccolta non è verificata.
 
 ## Netflix Italia e Prime Video Italia
 
-Fonti pubbliche verificate:
-- Netflix: https://www.justwatch.com/it/provider/netflix
-- Prime Video: https://www.justwatch.com/it/provider/amazon-prime-video
+- [Netflix su JustWatch](https://www.justwatch.com/it/provider/netflix)
+- [Prime Video su JustWatch](https://www.justwatch.com/it/provider/amazon-prime-video)
+- [Netflix su Streamingfilter](https://streamingfilter.com/it/catalogo-netflix)
+- [Prime Video su Streamingfilter](https://streamingfilter.com/it/catalogo-prime-video)
 
-Le pagine pubbliche presentano catalogo, film/serie e paginazione. Sono consultabili senza account o token. La raccolta automatica dal sito può essere fragile e va verificata sul markup effettivo; non è un'API ufficiale né garantita. Prima dell'integrazione va controllato il rispetto dei termini e un limite di richieste ragionevole.
+**Esito: non usare scraping di JustWatch.** Le pagine sono consultabili pubblicamente e mostrano cataloghi paginati, ma i Termini di JustWatch vietano espressamente scraping, data mining e raccolta automatizzata non autorizzata. Non è quindi una fonte corretta da automatizzare per questo sito senza autorizzazione.
 
-Pagine film dedicate:
-- https://www.justwatch.com/it/provider/netflix/film
-- https://www.justwatch.com/it/provider/amazon-prime-video/film
+Streamingfilter dichiara di usare dati TMDB e disponibilità JustWatch tramite TMDB; non offre, nelle pagine pubbliche consultate, un feed/API aperto documentato per riutilizzare il catalogo. Copiare/scrapare anche questo sito non è una soluzione verificata.
 
 ## Sky Italia
 
-Fonte primaria:
-- https://programmi.sky.it/
+Fonti ufficiali consultate:
+- [Programmi Sky](https://programmi.sky.it/): catalogo editoriale con schede di film e serie, descrizioni e stagioni.
+- [Canali Sky](https://www.sky.it/tv/canali): conferma l'offerta di canali Cinema e Intrattenimento.
+- [Guida Sky Cinema](https://assistenza.sky.it/programmazione/guida-sky-cinema): descrive i canali Sky Cinema e i contenuti on demand.
 
-Il sito ufficiale espone schede editoriali di film e serie TV, descrizioni e stagioni. È una fonte adatta a un primo test di raccolta pubblica, ma non è confermato un feed/API aperto con l'intero catalogo e la programmazione lineare di tutti i canali Sky.
+**Limite:** il catalogo editoriale di programmi.sky.it non equivale a un feed completo e documentato del palinsesto lineare. Non ho verificato un endpoint/feed pubblico stabile che permetta di importare automaticamente tutte le schede e i relativi poster. Non va confuso il catalogo on demand con gli orari di trasmissione dei canali.
 
-Per distinguere i due obiettivi:
-1. catalogo editoriale Sky (film e serie pubblicati su programmi.sky.it);
-2. palinsesto dei canali Sky Cinema e Intrattenimento (film/episodi trasmessi e orari).
+## Conclusione tecnica
 
-La seconda parte richiede una guida TV/palinsesto accessibile e verificabile, non va dedotta dal catalogo editoriale.
+Con i vincoli attuali (nessun token, nessuna credenziale e nessuno scraping contrario ai termini), non è stata verificata una fonte automatizzabile e riutilizzabile per i cataloghi completi Netflix e Prime Video. Per Sky esiste una fonte editoriale ufficiale consultabile, ma non è ancora verificato un feed automatico stabile.
 
-## Stato
-
-- Il prototipo TMDB con token è stato rimosso perché l'utente non vuole credenziali.
-- Nessun cambiamento è stato pubblicato sul branch `main`.
-- Prima di aggiungere scraper o workflow, occorre testare il markup pubblico in un ambiente con accesso web, salvare dati di esempio e verificare titoli, URL, poster e paginazione.
+Non aggiungere scraper basati su HTML non documentato né modificare il workflow di produzione finché non esiste una fonte utilizzabile e testata. Il codice del sito pubblicato resta invariato.
