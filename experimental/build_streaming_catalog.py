@@ -65,7 +65,7 @@ class SkyParser(HTMLParser):
 
 def load_sky_catalog(label, base_url, kind, route, page_name):
     found = {}
-    for page_no in range(0, 11):
+    for page_no in range(0, 21):
         url = base_url if page_no == 0 else f"https://programmi.sky.it/{route}/{page_name}-{page_no}"
         parser = SkyParser(kind)
         parser.feed(get_text(url))
