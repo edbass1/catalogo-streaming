@@ -4,12 +4,15 @@ Il branch `test-cataloghi-tmdb` è separato da `main`: il sito pubblicato non vi
 
 ## Netflix Italia e Prime Video Italia
 
+- [Netflix Lovers – Catalogo Netflix Italia](https://www.netflixlovers.it/catalogo-netflix-italia): fonte indicata dall'utente e verificata. La pagina dichiara 8.858 titoli complessivi, 5.074 film e 2.869 serie TV (valori mostrati al momento della consultazione); offre filtri per titolo, genere, tag, audio, sottotitoli e anno.
 - [Netflix su JustWatch](https://www.justwatch.com/it/provider/netflix)
 - [Prime Video su JustWatch](https://www.justwatch.com/it/provider/amazon-prime-video)
 - [Netflix su Streamingfilter](https://streamingfilter.com/it/catalogo-netflix)
 - [Prime Video su Streamingfilter](https://streamingfilter.com/it/catalogo-prime-video)
 
-**Esito: non usare scraping di JustWatch.** Le pagine sono consultabili pubblicamente e mostrano cataloghi paginati, ma i Termini di JustWatch vietano espressamente scraping, data mining e raccolta automatizzata non autorizzata. Non è quindi una fonte corretta da automatizzare per questo sito senza autorizzazione.
+**Netflix Lovers è una fonte catalografica molto più pertinente** di quelle individuate in precedenza. Tuttavia, il footer della stessa pagina vieta espressamente la riproduzione e l'estrazione, anche tramite software automatici, senza autorizzazione. Quindi non posso implementare uno scraper automatico senza prima ottenere il permesso del gestore. La pagina può essere proposta come collegamento esterno nel sito, ma questo non equivale a importarne titoli, descrizioni o immagini.
+
+**Esito JustWatch:** non usare scraping. Le pagine sono consultabili pubblicamente, ma i Termini vietano raccolta automatizzata non autorizzata.
 
 Streamingfilter dichiara di usare dati TMDB e disponibilità JustWatch tramite TMDB; non offre, nelle pagine pubbliche consultate, un feed/API aperto documentato per riutilizzare il catalogo. Copiare/scrapare anche questo sito non è una soluzione verificata.
 
@@ -24,6 +27,6 @@ Fonti ufficiali consultate:
 
 ## Conclusione tecnica
 
-Con i vincoli attuali (nessun token, nessuna credenziale e nessuno scraping contrario ai termini), non è stata verificata una fonte automatizzabile e riutilizzabile per i cataloghi completi Netflix e Prime Video. Per Sky esiste una fonte editoriale ufficiale consultabile, ma non è ancora verificato un feed automatico stabile.
+Con i vincoli attuali (nessun token, nessuna credenziale e nessuno scraping contrario ai termini), Netflix Lovers è una fonte utile per il catalogo Netflix ma richiede autorizzazione per l'estrazione automatica. Non è stata ancora verificata una fonte automatizzabile e riutilizzabile per Prime Video. Per Sky esiste una fonte editoriale ufficiale consultabile, ma non è ancora verificato un feed automatico stabile.
 
 Non aggiungere scraper basati su HTML non documentato né modificare il workflow di produzione finché non esiste una fonte utilizzabile e testata. Il codice del sito pubblicato resta invariato.
