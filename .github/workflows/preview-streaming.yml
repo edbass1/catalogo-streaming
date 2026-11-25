@@ -35,3 +35,5 @@ jobs:
             streaming-catalog.json
           if-no-files-found: error
           retention-days: 14
+
+# Forza una nuova anteprima dopo l'aggiornamento del parser Sky.
