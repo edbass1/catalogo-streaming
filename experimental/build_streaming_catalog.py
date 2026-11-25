@@ -15,12 +15,10 @@ SKY_PAGES = {
 }
 UA = {"User-Agent": "Mozilla/5.0 (compatible; CatalogoStreamingPreview/1.0)"}
 
-
 def get_text(url):
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=35) as response:
         return response.read().decode("utf-8", "replace")
-
 
 class SkyParser(HTMLParser):
     def __init__(self, kind):
@@ -35,12 +33,10 @@ class SkyParser(HTMLParser):
             href = attrs.get("href", "")
             prefix = "/film/" if self.kind == "movie" else "/serie-tv/"
             if href.startswith(prefix) and href.rstrip("/") != prefix.rstrip("/"):
-                url = urllib.parse.urljoin("https://programmi.sky.it", href)
                 self.current = {
                     "title": attrs.get("aria-label") or attrs.get("title") or "",
-                    "url": url,
+                    "url": urllib.parse.urljoin("https://programmi.sky.it", href),
                     "poster": "",
-                    "description": "",
                 }
         elif tag == "img" and self.current:
             self.current["poster"] = (
@@ -54,39 +50,31 @@ class SkyParser(HTMLParser):
 
     def handle_data(self, data):
         if self.current:
-            value = re.sub(r"\\s+", " ", data).strip()
+            value = re.sub(r"\s+", " ", data).strip()
             if value:
                 self.current["title"] = (self.current["title"] + " " + value).strip()
 
     def handle_endtag(self, tag):
         if tag == "a" and self.current:
             item = self.current
-            item["title"] = re.sub(r"\\s+", " ", item["title"]).strip()
+            item["title"] = re.sub(r"\s+", " ", item["title"]).strip()
             if item["title"] and len(item["title"]) < 180:
                 self.items[item["url"]] = item
             self.current = None
-
 
 def load_sky_catalog(label, url, kind):
     parser = SkyParser(kind)
     parser.feed(get_text(url))
     return [{
-        "provider": label,
-        "provider_name": label,
-        "kind": kind,
-        "title": item["title"],
-        "year": "",
-        "poster": item["poster"],
+        "provider": label, "provider_name": label, "kind": kind,
+        "title": item["title"], "year": "", "poster": item["poster"],
         "url": item["url"],
-        "description": item["description"],
     } for item in parser.items.values()]
-
 
 def main():
     report = {
         "generated": time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()),
-        "sky": {},
-        "errors": [],
+        "sky": {}, "errors": [],
     }
     groups = {}
     for label, (url, kind) in SKY_PAGES.items():
@@ -104,7 +92,6 @@ def main():
         json.dumps({"items": all_items, "report": report}, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-
     nav = "".join(
         f'<button onclick="show(\'{label}\')">{label} <span>{len(items)}</span></button>'
         for label, items in groups.items()
@@ -126,12 +113,11 @@ input{margin:14px 0 4px;padding:10px;width:min(100%,420px);border:0;border-radiu
 .card img{width:90px;aspect-ratio:2/3;object-fit:cover;border-radius:5px}
 .noimg{width:90px;color:#777;font-size:11px}.info{min-width:0}
 .info a{color:#fff;text-decoration:none}.info small{display:block;margin-top:5px}
-.note{padding:0 16px 12px;color:#aaa;font-size:12px}
 </style>
 <header><h1>Catalogo Sky — anteprima</h1>
 <small id="count">Cataloghi aggiornati automaticamente</small><nav>""" + nav + """</nav>
 <input id="q" placeholder="Cerca un titolo…"></header>
-<div class="note">Dati ricavati dalle pagine pubbliche del catalogo Sky. La copertura dipende dai titoli effettivamente esposti da quelle pagine.</div>
+<div style="padding:0 16px 12px;color:#aaa;font-size:12px">Dati ricavati dalle pagine pubbliche del catalogo Sky. La copertura dipende dai titoli effettivamente esposti da quelle pagine.</div>
 <main class="grid" id="grid"></main><script>
 const DATA=""" + payload + """;
 let active='Sky Cinema';
@@ -142,7 +128,6 @@ document.getElementById('q').addEventListener('input',render);show(active);
 </script></html>"""
     Path("streaming-preview.html").write_text(page, encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))
-
 
 if __name__ == "__main__":
     main()
